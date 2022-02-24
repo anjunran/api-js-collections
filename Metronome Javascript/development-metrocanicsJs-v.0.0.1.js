@@ -1,12 +1,21 @@
-;const MetroCanicJS = (arr = [], a = []) => {
-  let intervalID;
+//Nom du projet: MetroCanicJS
 
+;const MetroCanicJS = (arr = [], a = []) => {
+  //arr, a : 
+  //1. arr , est un array de stockage des "timestamp" dans la methode tap() "core".
+  //2. a : est un array de stockage des "duration (const e = arr[t + 1] - arr[t])" dans la methode tap() "core".
+  //Method tap(): consiste a calculer automatiquement la vitesse du rythme musical par utilisation des evenement "click" en front-end.
+  let intervalID;
+  
+  // Verifier si un input est un Objet; 
   function isObject(input) {
     return (
       input != null &&
       Object.prototype.toString.call(input) === "[object Object]"
     );
   }
+  
+  //Verifier si un input est un Array
   function isArray(input) {
     return (
       input instanceof Array ||
@@ -14,10 +23,14 @@
     );
   }
 
+  // Verifier si un Array n'est pas vide;
   function isNotUndefinedOrEmpty(arr) {
     return isArray(arr) ? void 0 !== arr && [] !== arr : false;
   }
 
+  // Definir les valeur initial des proprietes du metronome quand les Objets sont entrees dans le parametre "cs",
+  // si les parametres sont vides - appliquer des valeurs par defaut,
+  
   function isObjectGetVal(ivalue, name) {
     const { dcount, dbars, dbeat, dbpm, dtapMode } = {
       dcount: 1,
@@ -57,6 +70,11 @@
         break;
     }
   }
+  
+  // PARTIE A: Object Constructor "METRONOMECONSTRUCTOR" || DATAS du Metronome;
+  // lexiques :
+  //| count : compteur du metronome | bars : nombre mesure ou duree complet compté | beat : valeur de temps ex. comme dans les partitions 4/4, 3/4 ...| bpm : nombre de count / minute | tapMode : Boolean, passer en mode Tap, reglage de vitesse manuellement. 
+  
   function METRONOMECONSTRUCTOR(initialvalue) {
     this.count = isObjectGetVal(initialvalue, "count");
     this.bpm = isObjectGetVal(initialvalue, "bpm");
@@ -64,26 +82,35 @@
     this.bars = isObjectGetVal(initialvalue, "bars");
     this.tapMode = isObjectGetVal(initialvalue, "tapMode");
   }
-
+  
+  //METHODES POUR PERSONNALISER LES PROPRIETES DU "METRONOMECONSTRUCTOR"
+  //Prototype : remplace la valeur de "count" par input
   (METRONOMECONSTRUCTOR.prototype.SETCOUNT = function (input) {
     this.count = input;
   }),
+    //Prototype : remplace la valeur de "bpm" par input
     (METRONOMECONSTRUCTOR.prototype.SETBPM = function (input) {
       this.bpm = input;
     }),
+    //Prototype : remplace la valeur de "beat" par input
     (METRONOMECONSTRUCTOR.prototype.SETBEAT = function (input) {
       this.beat = input;
     }),
+    //Prototype : remplace la valeur de "bars" par input
     (METRONOMECONSTRUCTOR.prototype.SETBARS = function (input) {
       this.bars = input;
     }),
+    //Prototype : remplace la valeur de "tapMode" par input
     (METRONOMECONSTRUCTOR.prototype.SETTAPMODE = function (input) {
       this.tapMode = input;
     });
 
+  // Prototypes : change le status du Metronome;
+  //1. Valeur par defaut du Status.
   (METRONOMECONSTRUCTOR.prototype.DEFAULTSTATUS = function () {
     return this.STATUSTYPES[0];
   }),
+    //2. Methode update du status du Metronome. 
     (METRONOMECONSTRUCTOR.prototype.statusupdateSETTER = function (index) {
       if (typeof index === "string")
         switch (index) {
@@ -103,6 +130,7 @@
             return this.STATUSTYPES[0];
         }
     }),
+    //Liste des status valables
     (METRONOMECONSTRUCTOR.prototype.STATUSTYPES = [
       { NAME: "IDLE", STATE: 1 },
       { NAME: "PLAY", STATE: 1e1 },
@@ -110,17 +138,22 @@
       { NAME: "RESUME", STATE: 1e1 - 1e3 },
       { NAME: "PAUSE", STATE: 1e4 },
     ]);
-
+  
+  //Enclenchement du compteur et increment des datas
   (METRONOMECONSTRUCTOR.prototype.ONSET = function (core) {
     core.count < core.beat ? core.count++ : ((core.count = 1), core.bars++);
   }),
+    //Stopper le metronome sans reinitialiser les datas
     (METRONOMECONSTRUCTOR.prototype.BREAK = function (intid) {
       clearInterval(intid);
     }),
+    //Stopper le metronome et reinitialiser les datas
     (METRONOMECONSTRUCTOR.prototype.TERMINATE = function (intid) {
       this.BREAK(intid), this.SETCOUNT(1), this.SETBARS(0);
     });
 
+  //CAPTURE - DATAS METRONOME
+  // specifier les inputs a capturer
   (METRONOMECONSTRUCTOR.prototype.DISPLAY_THREADS = function ([
     metronome = async () => {},
     bpm = async () => {},
@@ -128,10 +161,12 @@
     bars = async () => {},
     OA = async () => {},
   ]) {
+    //capture des datas un par un 
     metronome({ data: this.count, s: this.status["NAME"] }),
       bpm({ data: this.bpm, s: this.status["NAME"] }),
       beat({ data: this.beat, s: this.status["NAME"] }),
       bars({ data: this.bars, s: this.status["NAME"] }),
+      //capture des datas globals
       OA({
         beat: this.beat,
         bpm: this.bpm,
@@ -141,11 +176,15 @@
         m: this.tapMode,
       });
   }),
+    
+    //Specification des "function" de capture
     (METRONOMECONSTRUCTOR.prototype.CountCore = void 0),
     (METRONOMECONSTRUCTOR.prototype.BpmCore = void 0),
     (METRONOMECONSTRUCTOR.prototype.BeatCore = void 0),
     (METRONOMECONSTRUCTOR.prototype.BarsCore = void 0),
     (METRONOMECONSTRUCTOR.prototype.OVERALL = void 0),
+    
+    //Appliquer la fonction DISPLAYTHREADS sur les fonctions de capture
     (METRONOMECONSTRUCTOR.prototype.SDTS = function () {
       this.DISPLAY_THREADS([
         this.CountCore,
@@ -155,6 +194,8 @@
         this.OVERALL,
       ]);
     }),
+    
+    //Blocs de personnalisation des fonctions de capture selon les besoins du developpeur
     (METRONOMECONSTRUCTOR.prototype.REALTIMEDATASLISTNER = function (
       eventName,
       clback
@@ -184,22 +225,31 @@
       return;
     });
 
+  //CAPTURE - CHANGEMENT DE STATUS
+  // declarer la methode de capture 
   (METRONOMECONSTRUCTOR.prototype.CLUSER_CALLBACK = void 0),
+    
+    //Specifier les inputs a capturer
     (METRONOMECONSTRUCTOR.prototype.CLCOLLECT_IO = function (
       cl = async () => {}
     ) {
       if (void 0 !== cl) cl({ state: this.status["NAME"] });
       return;
     }),
+    
+    //Collecter les inputs
     (METRONOMECONSTRUCTOR.prototype.GETSTATUSCHANGE = function () {
       this.CLCOLLECT_IO(this.CLUSER_CALLBACK);
     });
 
+  //SPEED du metronome
   METRONOMECONSTRUCTOR.prototype.speedInMs = function (bpm) {
     return 6e4 / bpm;
   };
 
+  //PARTIE B: Object Constructor "TIMECORE" || DATAS de Rythm musical;
   function TIMECORE(b) {
+    //Configuration des temps valables au parametre initiale
     this.BEAT = isNotUndefinedOrEmpty(b)
       ? isArray(b)
         ? b
@@ -207,7 +257,7 @@
       : [1];
     this.isBinaryByDefault = true;
   }
-
+  //Liste des figures de rythme
   TIMECORE.prototype.STANDARDPULSATION = [
     {
       n: "breve",
@@ -301,6 +351,7 @@
     },
   ];
 
+  // Liste des temps binaires ou temps divisible par 2..
   TIMECORE.prototype.getBinTime = function () {
     const b = this.BEAT;
 
@@ -359,7 +410,8 @@
     });
     return btime;
   };
-
+  
+  //liste des temps ternaire ou temps divisible par 3...
   TIMECORE.prototype.getTerTime = function () {
     const b = this.BEAT.map((beat) => 3 * beat);
     const timepulse = this.STANDARDPULSATION;
@@ -432,12 +484,17 @@
     });
     return ttime;
   };
+  
+  //Changer la valeur de la propriete BEAT
   TIMECORE.prototype.setBeat = function (input) {
     this.BEAT = [].concat(input);
   };
+  //Changer la valeur de prop isBinaryByDefault
   TIMECORE.prototype.setIsBinaryByDefault = function (input) {
     this.isBinaryByDefault = input;
   };
+  
+  //Filtrer la liste par un nom de mesure ex: 4/2 1/8 4/4
   TIMECORE.prototype.useSortFilterByString = function (filter) {
     if (void 0 !== filter)
       return !0 === [/\d+/g, /\d+\/\d+/g][1].test(filter) &&
@@ -447,6 +504,8 @@
         ? `${filter[0]}/${filter[1]}`
         : `${filter.time}/${filter.unit}`;
   };
+  
+  //Assemble les mesures binaire et ternaire dans une seule liste
   TIMECORE.prototype.fetchAll = function () {
     const combolist = this.getBinTime().concat(this.getTerTime());
     const n = [];
@@ -467,6 +526,8 @@
       .match(/([{])(.*?)([}])/g)
       .map((t) => JSON.parse(t));
   };
+  
+  //Sort les mesures specifiee dans l'input par son type : binaire ou ternaire.
   TIMECORE.prototype.sortMeasureByBinaryOrTernary = function (
     barString,
     { type: type },
@@ -482,6 +543,7 @@
       : null;
   };
 
+  //Definir les proprietes de Object "core" - commandes du metronome
   const metronomeCoreDefineProperties = function (mCore) {
     if (isObject(mCore))
       Object.defineProperties(mCore, {
@@ -585,6 +647,7 @@
       });
   };
 
+  
   const _CORE_ = function (parameters) {
     const metronome = new METRONOMECONSTRUCTOR(parameters);
     metronomeCoreDefineProperties(metronome);
@@ -596,6 +659,7 @@
     return _timecore_;
   };
 
+  //Objet API
   function MetroCanicJsAPI() {
     this.cs = undefined;
     this.tcs = undefined;
@@ -607,6 +671,7 @@
     };
   }
 
+  //configuration valeur initial d'input
   MetroCanicJsAPI.prototype.SetCoreObjectConfig = function (input) {
     this.cs = isObject(input) ? input : undefined;
   };
